@@ -1,803 +1,213 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Note Generator</title>
-
+<title>Business Day Aging Calculator</title>
 <style>
-body{
-margin:0;
-font-family:Arial;
-background:#f5f5f5;
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  max-width: 800px;
+  margin: auto;
 }
-
-.container{
-max-width:900px;
-margin:auto;
-padding:20px;
+h2 {
+  margin-bottom: 10px;
 }
-
-.card{
-background:#fff;
-border:1px solid #ddd;
-border-radius:12px;
-padding:16px;
-margin-bottom:16px;
+button, select {
+  padding: 10px 14px;
+  margin-top: 10px;
+  margin-right: 10px;
+  font-size: 16px;
+  cursor: pointer;
 }
-
-label{
-font-weight:bold;
-margin-top:12px;
-display:block;
+#output {
+  margin-top: 25px;
+  font-size: 18px;
+  line-height: 1.9;
 }
-
-textarea,
-input,
-select{
-width:100%;
-padding:10px;
-margin-top:6px;
-border-radius:8px;
-border:1px solid #ccc;
-box-sizing:border-box;
+.label {
+  font-weight: bold;
 }
-
-textarea{
-min-height:80px;
+#printWorksheet {
+  margin-top: 35px;
 }
-
-.hidden{
-display:none;
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
 }
-
-.output{
-white-space:pre-wrap;
-border:1px solid #ccc;
-border-radius:10px;
-padding:14px;
-min-height:220px;
-background:#fff;
+th, td {
+  border: 1px solid #000;
+  padding: 10px 10px 18px 10px;
+  text-align: left;
+  font-size: 16px;
+  height: 70px;
 }
-
-.actions{
-display:flex;
-gap:10px;
-margin-top:12px;
+th {
+  background-color: #f2f2f2;
 }
+.bucket-col { width: 90px; }
+.date-range-col { width: 130px; }
+.status-col { width: 65px; text-align: center; }
+.total-aging-col { width: 75px; text-align: center; font-weight: bold; background: #f9f9f9;}
+.total-queue-label { text-align: right; font-weight: bold; background: #f9f9f9;}
+.total-queue-cell { background: #f0f0f0; font-weight: bold; }
 
-button{
-padding:10px 14px;
-border-radius:10px;
-border:0;
-background:#111;
-color:#fff;
-cursor:pointer;
-}
-
-button.secondary{
-background:#eee;
-color:#111;
-border:1px solid #ccc;
+@media print {
+  button, select, label {
+    display: none !important;
+  }
+  body {
+    padding: 0;
+    max-width: 100%;
+  }
+  /* Make ONLY info and heading above table compact on print */
+  #output,
+  #output .label,
+  #output div {
+    font-size: 12px !important;
+    line-height: 1.1 !important;
+    margin: 0 0 2px 0 !important;
+  }
+  #printWorksheet h2 {
+    font-size: 15px !important;
+    margin-bottom: 4px !important;
+    margin-top: 4px !important;
+  }
+  #printWorksheet {
+    margin-top: 6px !important;
+  }
+  table, th, td {
+    font-size: 16px !important;
+    height: 70px !important;
+    padding: 10px 10px 18px 10px !important;
+  }
 }
 </style>
 </head>
-
 <body>
-
-<div class="container">
-
-<h2>Note Generator</h2>
-
-<div class="card">
-
-<label>What was the issue reported?</label>
-<textarea id="issue"></textarea>
-
-<label>What was found with unit?</label>
-<textarea id="found"></textarea>
-
-<label>What was the repair outcome?</label>
-<select id="repairOutcome">
-<option value="">Select</option>
-<option value="Repair">Repair</option>
-<option value="Unrepairable">Unrepairable</option>
-<option value="Refused to Repair">Refused to Repair</option>
+<h2>Business Day Aging Calculator</h2>
+<label for="schedule">Select Schedule:</label><br>
+<select id="schedule">
+  <option value="monfri">Mon-Fri</option>
+  <option value="tuesat">Tue-Sat</option>
 </select>
-
-
-<!-- UNREPAIRABLE -->
-
-<div id="unrepairableWrap" class="hidden">
-
-<label>What was the resolution?</label>
-<select id="unrepairableAction">
-<option value="">Select</option>
-<option value="Exchange">Exchange</option>
-<option value="Sale">Sale</option>
-<option value="Customer Declined Replacement">
-Customer Declined Replacement
-</option>
-</select>
-
-</div>
-
-
-<!-- EXCHANGE -->
-
-<div id="exchangeSourceWrap" class="hidden">
-
-<label>Does the Exchange come from Warehouse or DSC stock?</label>
-<select id="exchangeSource">
-<option value="">Select</option>
-<option value="Warehouse">Warehouse</option>
-<option value="DSC">DSC</option>
-</select>
-
-</div>
-
-
-<div id="exchangeSerialWrap" class="hidden">
-
-<label>Enter the serial number of the replacement unit provided to the customer from DSC:</label>
-<input type="text" id="exchangeSerial">
-
-</div>
-
-
-<div id="exchangeWhyWrap" class="hidden">
-
-<label>If exchange, why was it exchanged?</label>
-<textarea id="exchangeWhy"></textarea>
-
-</div>
-
-
-<!-- UNREPAIRABLE SALE -->
-
-<div id="unrepairableSaleSourceWrap" class="hidden">
-
-<label>Does the Sale come from Warehouse or DSC stock?</label>
-<select id="unrepairableSaleSource">
-<option value="">Select</option>
-<option value="Warehouse">Warehouse</option>
-<option value="DSC">DSC</option>
-</select>
-
-</div>
-
-
-<div id="unrepairableSaleSerialWrap" class="hidden">
-
-<label>Enter the serial number of the replacement unit provided to the customer from DSC:</label>
-<input type="text" id="unrepairableSaleSerial">
-
-</div>
-
-
-<!-- REFUSED TO REPAIR -->
-
-<div id="replacementWrap" class="hidden">
-
-<label>Did the customer purchase a replacement?</label>
-<select id="replacementPurchased">
-<option value="">Select</option>
-<option value="No">No</option>
-<option value="Yes">Yes</option>
-</select>
-
-</div>
-
-
-<!-- REFUSED TO REPAIR SALE -->
-
-<div id="refusedSaleSourceWrap" class="hidden">
-
-<label>Does the Sale come from Warehouse or DSC stock?</label>
-<select id="refusedSaleSource">
-<option value="">Select</option>
-<option value="Warehouse">Warehouse</option>
-<option value="DSC">DSC</option>
-</select>
-
-</div>
-
-
-<div id="refusedSaleSerialWrap" class="hidden">
-
-<label>Enter the serial number of the replacement unit provided to the customer from DSC:</label>
-<input type="text" id="refusedSaleSerial">
-
-</div>
-
-
-<!-- RECYCLE -->
-
-<div id="recycleWrap" class="hidden">
-
-<label>Did the customer choose to recycle their unit?</label>
-<select id="recycleChoice">
-<option value="">Select</option>
-<option value="No">No</option>
-<option value="Yes">Yes</option>
-</select>
-
-</div>
-
-
-<div id="recycleSerialWrap" class="hidden">
-
-<label>Enter the serial number of the unit being recycled:</label>
-<input type="text" id="recycleSerial">
-
-</div>
-
-
-<!-- ADVISE -->
-
-<label>Advise customer:</label>
-<textarea id="advise"></textarea>
-
-
-<!-- RETURN TRACKING -->
-
-<div id="returnTrackingSection" class="hidden">
-
-<label>Return tracking number:</label>
-<select id="trackingMode">
-<option value="">Select</option>
-<option value="N/A Walk-In">N/A Walk-In</option>
-<option value="Enter Tracking">Enter Tracking</option>
-</select>
-
-<div id="trackingWrap" class="hidden">
-
-<label>Tracking number:</label>
-<input type="text" id="tracking">
-
-</div>
-
-</div>
-
-
-<div class="actions">
-<button id="copyBtn">Copy Notes</button>
-<button id="clearBtn" class="secondary">Clear</button>
-</div>
-
-</div>
-
-
-<div class="card">
-
-<h3>Generated Notes</h3>
-
-<div class="output" id="output"></div>
-
-</div>
-
-</div>
-
-
+<br>
+<button onclick="calculateAging()">Generate</button>
+<button onclick="window.print()">Print</button>
+<div id="output"></div>
+<div id="printWorksheet"></div>
 <script>
-
-const $ = id => document.getElementById(id);
-
-const issue = $("issue");
-const found = $("found");
-
-const repairOutcome = $("repairOutcome");
-
-const unrepairableWrap = $("unrepairableWrap");
-const unrepairableAction = $("unrepairableAction");
-
-const exchangeSourceWrap = $("exchangeSourceWrap");
-const exchangeSource = $("exchangeSource");
-
-const exchangeSerialWrap = $("exchangeSerialWrap");
-const exchangeSerial = $("exchangeSerial");
-
-const exchangeWhyWrap = $("exchangeWhyWrap");
-const exchangeWhy = $("exchangeWhy");
-
-const unrepairableSaleSourceWrap = $("unrepairableSaleSourceWrap");
-const unrepairableSaleSource = $("unrepairableSaleSource");
-
-const unrepairableSaleSerialWrap = $("unrepairableSaleSerialWrap");
-const unrepairableSaleSerial = $("unrepairableSaleSerial");
-
-const replacementWrap = $("replacementWrap");
-const replacementPurchased = $("replacementPurchased");
-
-const refusedSaleSourceWrap = $("refusedSaleSourceWrap");
-const refusedSaleSource = $("refusedSaleSource");
-
-const refusedSaleSerialWrap = $("refusedSaleSerialWrap");
-const refusedSaleSerial = $("refusedSaleSerial");
-
-const recycleWrap = $("recycleWrap");
-const recycleChoice = $("recycleChoice");
-
-const recycleSerialWrap = $("recycleSerialWrap");
-const recycleSerial = $("recycleSerial");
-
-const advise = $("advise");
-
-const returnTrackingSection = $("returnTrackingSection");
-const trackingMode = $("trackingMode");
-const trackingWrap = $("trackingWrap");
-const tracking = $("tracking");
-
-const output = $("output");
-
-
-function sourceText(value){
-
-if(value === "DSC"){
-return "Dyson Service Center";
+function isBusinessDay(date, schedule) {
+  const day = date.getDay();
+  if (schedule === "monfri") {
+    return day !== 0 && day !== 6;
+  }
+  if (schedule === "tuesat") {
+    return day !== 0 && day !== 1;
+  }
+  return false;
 }
-
-return value;
-
+function formatDate(date) {
+  return `${date.getMonth() + 1}/${date.getDate()}`;
 }
-
-
-function updateConditional(){
-
-const outcome = repairOutcome.value;
-
-const isRepair =
-outcome === "Repair";
-
-const isUnrepairable =
-outcome === "Unrepairable";
-
-const isRefused =
-outcome === "Refused to Repair";
-
-
-/* UNREPAIRABLE */
-
-unrepairableWrap.classList.toggle(
-"hidden",
-!isUnrepairable
-);
-
-
-const isExchange =
-isUnrepairable &&
-unrepairableAction.value === "Exchange";
-
-
-const isUnrepairableSale =
-isUnrepairable &&
-unrepairableAction.value === "Sale";
-
-
-const isDeclinedReplacement =
-isUnrepairable &&
-unrepairableAction.value === "Customer Declined Replacement";
-
-
-/* EXCHANGE */
-
-exchangeSourceWrap.classList.toggle(
-"hidden",
-!isExchange
-);
-
-
-exchangeSerialWrap.classList.toggle(
-"hidden",
-!(
-isExchange &&
-exchangeSource.value === "DSC"
-)
-);
-
-
-exchangeWhyWrap.classList.toggle(
-"hidden",
-!isExchange
-);
-
-
-/* UNREPAIRABLE SALE */
-
-unrepairableSaleSourceWrap.classList.toggle(
-"hidden",
-!isUnrepairableSale
-);
-
-
-unrepairableSaleSerialWrap.classList.toggle(
-"hidden",
-!(
-isUnrepairableSale &&
-unrepairableSaleSource.value === "DSC"
-)
-);
-
-
-/* REFUSED TO REPAIR */
-
-replacementWrap.classList.toggle(
-"hidden",
-!isRefused
-);
-
-
-const refusedPurchasedYes =
-isRefused &&
-replacementPurchased.value === "Yes";
-
-
-refusedSaleSourceWrap.classList.toggle(
-"hidden",
-!refusedPurchasedYes
-);
-
-
-refusedSaleSerialWrap.classList.toggle(
-"hidden",
-!(
-refusedPurchasedYes &&
-refusedSaleSource.value === "DSC"
-)
-);
-
-
-/* RECYCLE */
-
-const showRecycleSection =
-isUnrepairableSale ||
-isDeclinedReplacement ||
-isRefused;
-
-
-recycleWrap.classList.toggle(
-"hidden",
-!showRecycleSection
-);
-
-
-const recycleYes =
-showRecycleSection &&
-recycleChoice.value === "Yes";
-
-
-recycleSerialWrap.classList.toggle(
-"hidden",
-!recycleYes
-);
-
-
-/* RETURN TRACKING */
-
-const repairNeedsTracking =
-isRepair;
-
-
-const declinedNeedsTracking =
-isDeclinedReplacement &&
-recycleChoice.value === "No";
-
-
-const refusedNeedsTracking =
-isRefused &&
-replacementPurchased.value === "No" &&
-recycleChoice.value === "No";
-
-
-const showReturnTracking =
-repairNeedsTracking ||
-declinedNeedsTracking ||
-refusedNeedsTracking;
-
-
-returnTrackingSection.classList.toggle(
-"hidden",
-!showReturnTracking
-);
-
-
-trackingWrap.classList.toggle(
-"hidden",
-!showReturnTracking ||
-trackingMode.value !== "Enter Tracking"
-);
-
+function getPreviousBusinessDays(startDate, count, schedule) {
+  const days = [];
+  const current = new Date(startDate);
+  current.setHours(12, 0, 0, 0);
+  while (days.length < count) {
+    if (isBusinessDay(current, schedule)) {
+      days.push(new Date(current));
+    }
+    current.setDate(current.getDate() - 1);
+  }
+  return days;
 }
-
-
-function buildNotes(){
-
-const lines = [];
-
-
-lines.push(
-`| What was the issue reported: ${issue.value}`
-);
-
-
-lines.push(
-`| What was found with unit: ${found.value}`
-);
-
-
-lines.push(
-`| What was the repair outcome?: ${repairOutcome.value}`
-);
-
-
-/* UNREPAIRABLE */
-
-if(repairOutcome.value === "Unrepairable"){
-
-lines.push(
-`| What was the resolution?: ${unrepairableAction.value}`
-);
-
-
-/* EXCHANGE */
-
-if(unrepairableAction.value === "Exchange"){
-
-lines.push(
-`| Unit provided from: ${sourceText(exchangeSource.value)}`
-);
-
-
-if(exchangeSource.value === "DSC"){
-
-lines.push(
-`| Replacement unit serial number: ${exchangeSerial.value}`
-);
-
+function getAgingData() {
+  const schedule = document.getElementById("schedule").value;
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const days = getPreviousBusinessDays(today, 11, schedule);
+  return {
+    today: formatDate(today),
+    scheduleLabel: schedule === "monfri" ? "Mon-Fri" : "Tue-Sat",
+    range01: `${formatDate(days[1])} to ${formatDate(days[0])}`,
+    range25: `${formatDate(days[5])} to ${formatDate(days[2])}`,
+    range610: `${formatDate(days[10])} to ${formatDate(days[6])}`,
+    over10: `Before ${formatDate(days[10])}`
+  };
 }
+function calculateAging() {
+  const data = getAgingData();
+  document.getElementById("output").innerHTML = `
+    <div><span class="label">Today:</span> ${data.today}</div>
+    <div><span class="label">Schedule:</span> ${data.scheduleLabel}</div>
+    <div><span class="label">0-1 days old:</span> ${data.range01}</div>
+    <div><span class="label">2-5 days old:</span> ${data.range25}</div>
+    <div><span class="label">6-10 days old:</span> ${data.range610}</div>
+    <div><span class="label">Over 10 days old:</span> ${data.over10}</div>
+  `;
 
-
-lines.push(
-`| If exchange, why was it exchanged?: ${exchangeWhy.value}`
-);
-
+  document.getElementById("printWorksheet").innerHTML = `
+    <h2>Business Day Aging Worksheet</h2>
+    <div><strong>Today:</strong> ${data.today}</div>
+    <div><strong>Schedule:</strong> ${data.scheduleLabel}</div>
+    <table>
+      <tr>
+        <th class="bucket-col">Bucket</th>
+        <th class="date-range-col">Date Range</th>
+        <th class="status-col">Walk-in Queue</th>
+        <th class="status-col">Shipped to Queue</th>
+        <th class="status-col">Waiting on Customer</th>
+        <th class="status-col">Waiting on Parts</th>
+        <th class="total-aging-col">Total Aging</th>
+      </tr>
+      <tr>
+        <td class="bucket-col">0–1 day</td>
+        <td class="date-range-col">${data.range01}</td>
+        <td class="status-col"></td>
+        <td class="status-col"></td>
+        <td class="status-col"></td>
+        <td class="status-col"></td>
+        <td class="total-aging-col"></td>
+      </tr>
+      <tr>
+        <td class="bucket-col">2–5 days</td>
+        <td class="date-range-col">${data.range25}</td>
+        <td class="status-col"></td>
+        <td class="status-col"></td>
+        <td class="status-col"></td>
+        <td class="status-col"></td>
+        <td class="total-aging-col"></td>
+      </tr>
+      <tr>
+        <td class="bucket-col">6–10 days</td>
+        <td class="date-range-col">${data.range610}</td>
+        <td class="status-col"></td>
+        <td class="status-col"></td>
+        <td class="status-col"></td>
+        <td class="status-col"></td>
+        <td class="total-aging-col"></td>
+      </tr>
+      <tr>
+        <td class="bucket-col">Over 10 days</td>
+        <td class="date-range-col">${data.over10}</td>
+        <td class="status-col"></td>
+        <td class="status-col"></td>
+        <td class="status-col"></td>
+        <td class="status-col"></td>
+        <td class="total-aging-col"></td>
+      </tr>
+      <tr>
+        <td class="total-queue-label" colspan="2">Total Queue</td>
+        <td class="total-queue-cell"></td>
+        <td class="total-queue-cell"></td>
+        <td class="total-queue-cell"></td>
+        <td class="total-queue-cell"></td>
+        <td class="total-aging-col"></td>
+      </tr>
+    </table>
+  `;
 }
-
-
-/* SALE */
-
-if(unrepairableAction.value === "Sale"){
-
-lines.push(
-`| Unit provided from: ${sourceText(unrepairableSaleSource.value)}`
-);
-
-
-if(unrepairableSaleSource.value === "DSC"){
-
-lines.push(
-`| Replacement unit serial number: ${unrepairableSaleSerial.value}`
-);
-
-}
-
-
-lines.push(
-`| Did the customer choose to recycle their unit?: ${recycleChoice.value}`
-);
-
-
-if(recycleChoice.value === "Yes"){
-
-lines.push(
-`| Recycled unit serial number: ${recycleSerial.value}`
-);
-
-}
-
-}
-
-
-/* CUSTOMER DECLINED REPLACEMENT */
-
-if(unrepairableAction.value === "Customer Declined Replacement"){
-
-lines.push(
-`| Did the customer choose to recycle their unit?: ${recycleChoice.value}`
-);
-
-
-if(recycleChoice.value === "Yes"){
-
-lines.push(
-`| Recycled unit serial number: ${recycleSerial.value}`
-);
-
-}
-
-}
-
-}
-
-
-/* REFUSED TO REPAIR */
-
-if(repairOutcome.value === "Refused to Repair"){
-
-lines.push(
-`| Did the customer purchase a replacement?: ${replacementPurchased.value}`
-);
-
-
-if(replacementPurchased.value === "Yes"){
-
-lines.push(
-`| Unit provided from: ${sourceText(refusedSaleSource.value)}`
-);
-
-
-if(refusedSaleSource.value === "DSC"){
-
-lines.push(
-`| Replacement unit serial number: ${refusedSaleSerial.value}`
-);
-
-}
-
-}
-
-
-lines.push(
-`| Did the customer choose to recycle their unit?: ${recycleChoice.value}`
-);
-
-
-if(recycleChoice.value === "Yes"){
-
-lines.push(
-`| Recycled unit serial number: ${recycleSerial.value}`
-);
-
-}
-
-}
-
-
-/* ADVISE CUSTOMER */
-
-lines.push(
-`| Advise customer: ${advise.value}`
-);
-
-
-/* RETURN TRACKING */
-
-const repairNeedsTracking =
-repairOutcome.value === "Repair";
-
-
-const declinedNeedsTracking =
-repairOutcome.value === "Unrepairable" &&
-unrepairableAction.value === "Customer Declined Replacement" &&
-recycleChoice.value === "No";
-
-
-const refusedNeedsTracking =
-repairOutcome.value === "Refused to Repair" &&
-replacementPurchased.value === "No" &&
-recycleChoice.value === "No";
-
-
-const showReturnTracking =
-repairNeedsTracking ||
-declinedNeedsTracking ||
-refusedNeedsTracking;
-
-
-if(showReturnTracking){
-
-if(trackingMode.value === "N/A Walk-In"){
-
-lines.push(
-`| Return tracking number: N/A Walk-In`
-);
-
-}
-
-
-else if(trackingMode.value === "Enter Tracking"){
-
-lines.push(
-`| Return tracking number: ${tracking.value}`
-);
-
-}
-
-}
-
-
-output.textContent = lines.join("\n");
-
-}
-
-
-document
-.querySelectorAll("textarea,input,select")
-.forEach(el => {
-
-el.addEventListener("input", () => {
-
-updateConditional();
-buildNotes();
-
-});
-
-
-el.addEventListener("change", () => {
-
-updateConditional();
-buildNotes();
-
-});
-
-});
-
-
-$("copyBtn").onclick = async () => {
-
-await navigator.clipboard.writeText(
-output.textContent
-);
-
-
-const toast =
-document.createElement("div");
-
-
-toast.textContent = "Copied!";
-
-toast.style.position = "fixed";
-toast.style.bottom = "20px";
-toast.style.right = "20px";
-toast.style.background = "#111";
-toast.style.color = "#fff";
-toast.style.padding = "10px 14px";
-toast.style.borderRadius = "10px";
-
-
-document.body.appendChild(toast);
-
-
-setTimeout(
-() => toast.remove(),
-1200
-);
-
-};
-
-
-$("clearBtn").onclick = () => {
-
-document
-.querySelectorAll("textarea,input")
-.forEach(e => e.value = "");
-
-
-document
-.querySelectorAll("select")
-.forEach(e => e.selectedIndex = 0);
-
-
-updateConditional();
-buildNotes();
-
-};
-
-
-updateConditional();
-buildNotes();
-
 </script>
-
 </body>
 </html>
