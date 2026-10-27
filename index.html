@@ -90,6 +90,7 @@ th {
 <select id="schedule">
   <option value="monfri">Mon-Fri</option>
   <option value="tuesat">Tue-Sat</option>
+  <option value="monsat">Mon-Sat</option>
 </select>
 <br>
 <button onclick="calculateAging()">Generate</button>
@@ -99,12 +100,19 @@ th {
 <script>
 function isBusinessDay(date, schedule) {
   const day = date.getDay();
+
   if (schedule === "monfri") {
     return day !== 0 && day !== 6;
   }
+
   if (schedule === "tuesat") {
     return day !== 0 && day !== 1;
   }
+
+  if (schedule === "monsat") {
+    return day !== 0;
+  }
+
   return false;
 }
 function formatDate(date) {
@@ -126,88 +134,201 @@ function getAgingData() {
   const schedule = document.getElementById("schedule").value;
   const today = new Date();
   today.setHours(12, 0, 0, 0);
-  const days = getPreviousBusinessDays(today, 11, schedule);
+
+  const days = getPreviousBusinessDays(today, 61, schedule);
+
   return {
     today: formatDate(today),
-    scheduleLabel: schedule === "monfri" ? "Mon-Fri" : "Tue-Sat",
+
+    scheduleLabel:
+      schedule === "monfri"
+        ? "Mon-Fri"
+        : schedule === "tuesat"
+        ? "Tue-Sat"
+        : "Mon-Sat",
+
     range01: `${formatDate(days[1])} to ${formatDate(days[0])}`,
     range25: `${formatDate(days[5])} to ${formatDate(days[2])}`,
     range610: `${formatDate(days[10])} to ${formatDate(days[6])}`,
-    over10: `Before ${formatDate(days[10])}`
+
+    range1115: `${formatDate(days[15])} to ${formatDate(days[11])}`,
+    range1620: `${formatDate(days[20])} to ${formatDate(days[16])}`,
+    range2125: `${formatDate(days[25])} to ${formatDate(days[21])}`,
+    range2630: `${formatDate(days[30])} to ${formatDate(days[26])}`,
+    range3135: `${formatDate(days[35])} to ${formatDate(days[31])}`,
+    range3640: `${formatDate(days[40])} to ${formatDate(days[36])}`,
+    range4145: `${formatDate(days[45])} to ${formatDate(days[41])}`,
+    range4650: `${formatDate(days[50])} to ${formatDate(days[46])}`,
+    range5155: `${formatDate(days[55])} to ${formatDate(days[51])}`,
+    range5660: `${formatDate(days[60])} to ${formatDate(days[56])}`,
+
+    over60: `Before ${formatDate(days[60])}`
   };
 }
-function calculateAging() {
-  const data = getAgingData();
-  document.getElementById("output").innerHTML = `
-    <div><span class="label">Today:</span> ${data.today}</div>
-    <div><span class="label">Schedule:</span> ${data.scheduleLabel}</div>
-    <div><span class="label">0-1 days old:</span> ${data.range01}</div>
-    <div><span class="label">2-5 days old:</span> ${data.range25}</div>
-    <div><span class="label">6-10 days old:</span> ${data.range610}</div>
-    <div><span class="label">Over 10 days old:</span> ${data.over10}</div>
-  `;
+document.getElementById("output").innerHTML = `
+  <div><span class="label">Today:</span> ${data.today}</div>
+  <div><span class="label">Schedule:</span> ${data.scheduleLabel}</div>
 
-  document.getElementById("printWorksheet").innerHTML = `
-    <h2>Business Day Aging Worksheet</h2>
-    <div><strong>Today:</strong> ${data.today}</div>
-    <div><strong>Schedule:</strong> ${data.scheduleLabel}</div>
-    <table>
-      <tr>
-        <th class="bucket-col">Bucket</th>
-        <th class="date-range-col">Date Range</th>
-        <th class="status-col">Walk-in Queue</th>
-        <th class="status-col">Shipped to Queue</th>
-        <th class="status-col">Waiting on Customer</th>
-        <th class="status-col">Waiting on Parts</th>
-        <th class="total-aging-col">Total Aging</th>
-      </tr>
-      <tr>
-        <td class="bucket-col">0–1 day</td>
-        <td class="date-range-col">${data.range01}</td>
-        <td class="status-col"></td>
-        <td class="status-col"></td>
-        <td class="status-col"></td>
-        <td class="status-col"></td>
-        <td class="total-aging-col"></td>
-      </tr>
-      <tr>
-        <td class="bucket-col">2–5 days</td>
-        <td class="date-range-col">${data.range25}</td>
-        <td class="status-col"></td>
-        <td class="status-col"></td>
-        <td class="status-col"></td>
-        <td class="status-col"></td>
-        <td class="total-aging-col"></td>
-      </tr>
-      <tr>
-        <td class="bucket-col">6–10 days</td>
-        <td class="date-range-col">${data.range610}</td>
-        <td class="status-col"></td>
-        <td class="status-col"></td>
-        <td class="status-col"></td>
-        <td class="status-col"></td>
-        <td class="total-aging-col"></td>
-      </tr>
-      <tr>
-        <td class="bucket-col">Over 10 days</td>
-        <td class="date-range-col">${data.over10}</td>
-        <td class="status-col"></td>
-        <td class="status-col"></td>
-        <td class="status-col"></td>
-        <td class="status-col"></td>
-        <td class="total-aging-col"></td>
-      </tr>
-      <tr>
-        <td class="total-queue-label" colspan="2">Total Queue</td>
-        <td class="total-queue-cell"></td>
-        <td class="total-queue-cell"></td>
-        <td class="total-queue-cell"></td>
-        <td class="total-queue-cell"></td>
-        <td class="total-aging-col"></td>
-      </tr>
-    </table>
-  `;
-}
+  <div><span class="label">0-1 days old:</span> ${data.range01}</div>
+  <div><span class="label">2-5 days old:</span> ${data.range25}</div>
+  <div><span class="label">6-10 days old:</span> ${data.range610}</div>
+
+  <div><span class="label">11-15 days old:</span> ${data.range1115}</div>
+  <div><span class="label">16-20 days old:</span> ${data.range1620}</div>
+  <div><span class="label">21-25 days old:</span> ${data.range2125}</div>
+  <div><span class="label">26-30 days old:</span> ${data.range2630}</div>
+  <div><span class="label">31-35 days old:</span> ${data.range3135}</div>
+  <div><span class="label">36-40 days old:</span> ${data.range3640}</div>
+  <div><span class="label">41-45 days old:</span> ${data.range4145}</div>
+  <div><span class="label">46-50 days old:</span> ${data.range4650}</div>
+  <div><span class="label">51-55 days old:</span> ${data.range5155}</div>
+  <div><span class="label">56-60 days old:</span> ${data.range5660}</div>
+
+  <div><span class="label">More than 60 days old:</span> ${data.over60}</div>
+`;
+
+ <tr>
+  <td class="bucket-col">11–15 days</td>
+  <td class="date-range-col">
+    ${data.range1115}<br>
+    <small><strong>Provide order number(s)</strong></small>
+  </td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="total-aging-col"></td>
+</tr>
+
+<tr>
+  <td class="bucket-col">16–20 days</td>
+  <td class="date-range-col">
+    ${data.range1620}<br>
+    <small><strong>Provide order number(s)</strong></small>
+  </td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="total-aging-col"></td>
+</tr>
+
+<tr>
+  <td class="bucket-col">21–25 days</td>
+  <td class="date-range-col">
+    ${data.range2125}<br>
+    <small><strong>Provide order number(s)</strong></small>
+  </td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="total-aging-col"></td>
+</tr>
+
+<tr>
+  <td class="bucket-col">26–30 days</td>
+  <td class="date-range-col">
+    ${data.range2630}<br>
+    <small><strong>Provide order number(s)</strong></small>
+  </td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="total-aging-col"></td>
+</tr>
+
+<tr>
+  <td class="bucket-col">31–35 days</td>
+  <td class="date-range-col">
+    ${data.range3135}<br>
+    <small><strong>Provide order number(s)</strong></small>
+  </td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="total-aging-col"></td>
+</tr>
+
+<tr>
+  <td class="bucket-col">36–40 days</td>
+  <td class="date-range-col">
+    ${data.range3640}<br>
+    <small><strong>Provide order number(s)</strong></small>
+  </td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="total-aging-col"></td>
+</tr>
+
+<tr>
+  <td class="bucket-col">41–45 days</td>
+  <td class="date-range-col">
+    ${data.range4145}<br>
+    <small><strong>Provide order number(s)</strong></small>
+  </td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="total-aging-col"></td>
+</tr>
+
+<tr>
+  <td class="bucket-col">46–50 days</td>
+  <td class="date-range-col">
+    ${data.range4650}<br>
+    <small><strong>Provide order number(s)</strong></small>
+  </td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="total-aging-col"></td>
+</tr>
+
+<tr>
+  <td class="bucket-col">51–55 days</td>
+  <td class="date-range-col">
+    ${data.range5155}<br>
+    <small><strong>Provide order number(s)</strong></small>
+  </td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="total-aging-col"></td>
+</tr>
+
+<tr>
+  <td class="bucket-col">56–60 days</td>
+  <td class="date-range-col">
+    ${data.range5660}<br>
+    <small><strong>Provide order number(s)</strong></small>
+  </td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="total-aging-col"></td>
+</tr>
+
+<tr>
+  <td class="bucket-col">More than 60 days</td>
+  <td class="date-range-col">
+    ${data.over60}<br>
+    <small><strong>Provide order number(s)</strong></small>
+  </td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="status-col"></td>
+  <td class="total-aging-col"></td>
+</tr>
 </script>
 </body>
 </html>
